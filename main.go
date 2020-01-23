@@ -71,6 +71,36 @@ func getTimelogs(json map[string]interface{}) []timelog {
 	return result
 }
 
+type task struct {
+	taskID   string
+	fields   map[string]string
+	timelogs []timelog
+}
+
+func getTasks(json map[string]interface{}, customFields map[string]string, timelogs []timelog) []task {
+	var data = json["data"].([]interface{})
+
+	var result = make([]task, len(data))
+	for i, k := range data {
+		var entry = k.(map[string]interface{})
+		var task = task{}
+
+		task.taskID = entry["id"].(string)
+
+		task.fields = make(map[string]string)
+		var entryFields = entry["customFields"].([]interface{})
+		for _, j := range entryFields {
+			var field = j.(map[string]interface{})
+			var fieldName = customFields[field["id"].(string)]
+			task.fields[fieldName] = field["value"].(string)
+		}
+
+		result[i] = task
+	}
+
+	return result
+}
+
 func main() {
 	fmt.Println("wrike-extractor running!")
 
@@ -95,12 +125,13 @@ func main() {
 	json = getDataForURL(host+"/timelogs", apiKey)
 	var timeLogs = getTimelogs(json)
 
-	// var tasks = getDataForURL(host+"/tasks?fields=['customFields']", apiKey)
-	//
+	json = getDataForURL(host+"/tasks?fields=['customFields']", apiKey)
+	var tasks = getTasks(json, customFields, timeLogs)
 
 	fmt.Println(customFields)
 	fmt.Println(contacts)
 	fmt.Println(timeLogs)
+	fmt.Println(tasks)
 
 	// TODO: compose CSV and print out
 }
