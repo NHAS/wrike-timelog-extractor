@@ -35,6 +35,18 @@ func getCustomFieldsMap(json map[string]interface{}) map[string]string {
 	return result
 }
 
+func getContactsMap(json map[string]interface{}) map[string]string {
+	var data = json["data"].([]interface{})
+
+	var result = make(map[string]string)
+	for _, k := range data {
+		var field = k.(map[string]interface{})
+		result[field["id"].(string)] = field["firstName"].(string) + " " + field["lastName"].(string)
+	}
+
+	return result
+}
+
 func main() {
 	fmt.Println("wrike-extractor running!")
 
@@ -52,11 +64,15 @@ func main() {
 
 	var json = getDataForURL(host+"/customfields", apiKey)
 	var customFields = getCustomFieldsMap(json)
+
+	json = getDataForURL(host+"/contacts", apiKey)
+	var contacts = getContactsMap(json)
+
 	// var tasks = getDataForURL(host+"/tasks?fields=['customFields']", apiKey)
 	// var timelogs = getDataForURL(host+"/timelogs", apiKey)
-	// var contacts = getDataForURL(host+"/contacts", apiKey)
 
 	fmt.Println(customFields)
+	fmt.Println(contacts)
 
 	// TODO: compose CSV and print out
 }
