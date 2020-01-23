@@ -47,6 +47,30 @@ func getContactsMap(json map[string]interface{}) map[string]string {
 	return result
 }
 
+type timelog struct {
+	taskID, userID, trackedDate string
+	hours                       float64
+}
+
+func getTimelogs(json map[string]interface{}) []timelog {
+	var data = json["data"].([]interface{})
+
+	var result = make([]timelog, len(data))
+	for i, k := range data {
+		var entry = k.(map[string]interface{})
+		var timelog = timelog{}
+
+		timelog.taskID = entry["taskId"].(string)
+		timelog.userID = entry["userId"].(string)
+		timelog.trackedDate = entry["trackedDate"].(string)
+		timelog.hours = entry["hours"].(float64)
+
+		result[i] = timelog
+	}
+
+	return result
+}
+
 func main() {
 	fmt.Println("wrike-extractor running!")
 
@@ -68,11 +92,15 @@ func main() {
 	json = getDataForURL(host+"/contacts", apiKey)
 	var contacts = getContactsMap(json)
 
+	json = getDataForURL(host+"/timelogs", apiKey)
+	var timeLogs = getTimelogs(json)
+
 	// var tasks = getDataForURL(host+"/tasks?fields=['customFields']", apiKey)
-	// var timelogs = getDataForURL(host+"/timelogs", apiKey)
+	//
 
 	fmt.Println(customFields)
 	fmt.Println(contacts)
+	fmt.Println(timeLogs)
 
 	// TODO: compose CSV and print out
 }
