@@ -26,14 +26,15 @@ func getDataForURL(url string, apiKey string) interface{} {
 func main() {
 	fmt.Println("wrike-extractor running!")
 
-	// if len(os.Args) != 2 {
-	// 	fmt.Println("please provide an API key (permananent access token) as an argument")
-	// 	os.Exit(1)
-	// }
-
-	// var apiKey = os.Args[1]
-
 	var apiKey = os.Getenv("WRIKEKEY")
+	if len(os.Args) == 2 {
+		apiKey = os.Args[1]
+	}
+
+	if apiKey == "" {
+		fmt.Println("please provide an API key (permananent access token) as an argument or as the env var WRIKEKEY")
+		os.Exit(1)
+	}
 
 	var host = "https://www.wrike.com/api/v4"
 
