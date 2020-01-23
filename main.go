@@ -131,7 +131,7 @@ func main() {
 	json = getDataForURL(host+"/timelogs", apiKey)
 	var timeLogs = getTimelogMap(json, contacts)
 
-	json = getDataForURL(host+"/folders/IEADDL6NI4NMQXDT/tasks?fields=['customFields']", apiKey)
+	json = getDataForURL(host+"/tasks?subTasks=true&fields=['customFields']", apiKey)
 	var tasks = getTasks(json, customFields, timeLogs)
 
 	fmt.Println(customFields)
