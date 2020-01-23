@@ -35,9 +35,11 @@ func main() {
 	var host = "https://www.wrike.com/api/v4"
 
 	var customFields = getDataForURL(host+"/customfields", apiKey)
-	var tasks = getDataForURL(host+"/tasks?fields=['customFields']", apiKey)
-	var timelogs = getDataForURL(host+"/timelogs", apiKey)
-	var contacts = getDataForURL(host+"/contacts", apiKey)
+	// var tasks = getDataForURL(host+"/tasks?fields=['customFields']", apiKey)
+	// var timelogs = getDataForURL(host+"/timelogs", apiKey)
+	// var contacts = getDataForURL(host+"/contacts", apiKey)
+
+	fmt.Println(customFields)
 
 	// TODO: compose CSV and print out
 }
