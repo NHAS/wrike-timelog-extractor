@@ -75,32 +75,44 @@ func getTimelogMap(json map[string]interface{}, contacts map[string]string) map[
 	return result
 }
 
-type task struct {
-	fields   map[string]string
-	timelogs []timelog
+type taskTimeLog struct {
+	fields  map[string]string
+	timelog timelog
 }
 
-func getTasks(json map[string]interface{}, customFields map[string]string, timelogs map[string][]timelog) []task {
+func getTaskTimelogs(json map[string]interface{}, customFields map[string]string, timelogs map[string][]timelog) []taskTimeLog {
 	var data = json["data"].([]interface{})
 
-	var result = []task{}
+	var result = []taskTimeLog{}
 	for _, k := range data {
 		var entry = k.(map[string]interface{})
-		var task = task{}
 
-		task.fields = make(map[string]string)
+		var fields = make(map[string]string)
 		var entryFields = entry["customFields"].([]interface{})
 		for _, j := range entryFields {
 			var field = j.(map[string]interface{})
 			var fieldName = customFields[field["id"].(string)]
-			task.fields[fieldName] = field["value"].(string)
+			var fieldValue = field["value"].(string)
+			if fieldValue != "" {
+				fields[fieldName] = fieldValue
+			}
 		}
 
-		var taskID = entry["id"].(string)
-		task.timelogs = timelogs[taskID]
+		if len(fields) > 0 {
+			for key := range customFields {
+				if _, exists := fields[key]; !exists {
+					fields[key] = ""
+				}
+			}
 
-		if len(task.fields) > 0 && len(task.timelogs) > 0 {
-			result = append(result, task)
+			var taskID = entry["id"].(string)
+			var taskLogs = timelogs[taskID]
+			for _, log := range taskLogs {
+				var task = taskTimeLog{}
+				task.fields = fields
+				task.timelog = log
+				result = append(result, task)
+			}
 		}
 	}
 
@@ -108,8 +120,6 @@ func getTasks(json map[string]interface{}, customFields map[string]string, timel
 }
 
 func main() {
-	fmt.Println("wrike-extractor running!")
-
 	var apiKey = os.Getenv("WRIKEKEY")
 	if len(os.Args) == 2 {
 		apiKey = os.Args[1]
@@ -132,12 +142,15 @@ func main() {
 	var timeLogs = getTimelogMap(json, contacts)
 
 	json = getDataForURL(host+"/tasks?subTasks=true&fields=['customFields']", apiKey)
-	var tasks = getTasks(json, customFields, timeLogs)
+	var tasks = getTaskTimelogs(json, customFields, timeLogs)
 
-	fmt.Println(customFields)
-	fmt.Println(contacts)
-	fmt.Println(timeLogs)
-	fmt.Println(tasks)
+	var csv = ""
+	for _, task := range tasks {
+		for _, key := range customFields {
+			csv += task.fields[key] + ","
+		}
+		csv += fmt.Sprintf("%s,%s,%f\n", task.timelog.user, task.timelog.trackedDate, task.timelog.hours)
+	}
 
-	// TODO: compose CSV and print out
+	fmt.Print(csv)
 }
