@@ -60,9 +60,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	customFieldKeys := make([]string, 0)
+	for key := range customFields {
+		customFieldKeys = append(customFieldKeys, key)
+	}
+
 	csv := ""
 	for _, task := range tasks {
-		for key := range customFields {
+		for _, key := range customFieldKeys {
 			csv += task.fields[key] + ","
 		}
 		csv += fmt.Sprintf("%s,%s,%f\n", task.timelog.User, task.timelog.TrackedDate, task.timelog.Hours)
