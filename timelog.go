@@ -49,6 +49,7 @@ type timeLogCustomFields struct {
 
 type collectiveTimeLog struct {
 	Id           string
+	ParentIds    []string
 	CustomFields []timeLogCustomFields
 }
 
@@ -57,7 +58,7 @@ type collectiveTimelogs struct {
 }
 
 func getTaskTimelogs(apiKey string, customFields map[string]string, timelogs map[string][]Timelog) (result []taskTimeLog, err error) {
-	textContent := getDataForURL(host+"/tasks?subTasks=true&fields=['customFields']", apiKey)
+	textContent := getDataForURL(host+"/tasks?subTasks=true&fields=['customFields','parentIds']", apiKey)
 
 	var cTimelogs collectiveTimelogs
 	err = json.Unmarshal(textContent, &cTimelogs)
