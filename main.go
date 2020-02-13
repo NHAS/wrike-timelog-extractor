@@ -55,7 +55,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tasks, err := getTaskTimelogs(apiKey, customFields, timeLogs)
+	folders, err := getFoldersAsTasks(apiKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tasks, err := getTaskTimelogs(apiKey, customFields, timeLogs, folders)
 	if err != nil {
 		log.Fatal(err)
 	}

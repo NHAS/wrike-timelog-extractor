@@ -42,7 +42,7 @@ type taskTimeLog struct {
 	timelog Timelog
 }
 
-type timeLogCustomFields struct {
+type customFields struct {
 	Id    string
 	Value string
 }
@@ -50,7 +50,8 @@ type timeLogCustomFields struct {
 type collectiveTimeLog struct {
 	Id           string
 	SubTaskIds   []string
-	CustomFields []timeLogCustomFields
+	ParentIds    []string
+	CustomFields []customFields
 }
 
 type collectiveTimelogs struct {
@@ -77,8 +78,8 @@ func findCustomFields(task collectiveTimeLog, parentMap map[string]collectiveTim
 	return fields
 }
 
-func getTaskTimelogs(apiKey string, customFields map[string]string, timelogs map[string][]Timelog) (result []taskTimeLog, err error) {
-	textContent := getDataForURL(host+"/tasks?subTasks=true&fields=['customFields','subTaskIds']", apiKey)
+func getTaskTimelogs(apiKey string, customFields map[string]string, timelogs map[string][]Timelog, folders map[string]collectiveTimeLog) (result []taskTimeLog, err error) {
+	textContent := getDataForURL(host+"/tasks?subTasks=true&fields=['customFields','subTaskIds','parentIds']", apiKey)
 
 	var cTimelogs collectiveTimelogs
 	err = json.Unmarshal(textContent, &cTimelogs)
@@ -91,6 +92,9 @@ func getTaskTimelogs(apiKey string, customFields map[string]string, timelogs map
 	for _, k := range cTimelogs.Data {
 		for _, j := range k.SubTaskIds {
 			parentMap[j] = k
+		}
+		for _, j := range k.ParentIds {
+			// if exists in folders, add folder
 		}
 	}
 

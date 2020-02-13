@@ -25,7 +25,6 @@ func getCustomFieldsMap(apiKey string) (result map[string]string, err error) {
 	result = make(map[string]string)
 
 	for _, field := range fields.Data {
-
 		result[field.Id] = field.Title
 	}
 
