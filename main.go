@@ -62,10 +62,10 @@ func main() {
 
 	csv := ""
 	for _, task := range tasks {
-		for _, key := range customFields {
+		for key := range customFields {
 			csv += task.fields[key] + ","
 		}
-		csv += fmt.Sprintf("%s,%s,%f\n", task.timelog.User, task.timelog.TackedDate, task.timelog.Hours)
+		csv += fmt.Sprintf("%s,%s,%f\n", task.timelog.User, task.timelog.TrackedDate, task.timelog.Hours)
 	}
 
 	fmt.Print(csv)
