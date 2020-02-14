@@ -1,12 +1,12 @@
 package models
 
-type collectiveTimeLog struct {
+type CollectiveTimeLog struct {
 	Id           string
 	SubTaskIds   []string
 	ParentIds    []string
 	CustomFields []CustomField
 }
 
-type collectiveTimelogs struct {
-	Data []collectiveTimeLog
+type CollectiveTimelogs struct {
+	Data []CollectiveTimeLog
 }

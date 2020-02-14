@@ -2,20 +2,21 @@ package main
 
 import (
 	"encoding/json"
-	"models"
+
+	"github.com/ChrisPritchard/wrike-timelog-extractor/models"
 )
 
-func getContactsMap(apiKey string) (result map[string]Contact, err error) {
+func getContactsMap(apiKey string) (result map[string]models.Contact, err error) {
 
 	textContent := getDataForURL(host+"/contacts", apiKey)
 
-	var contacts Contacts
+	var contacts models.Contacts
 	err = json.Unmarshal(textContent, &contacts)
 	if err != nil {
 		return result, err
 	}
 
-	result = make(map[string]Contact)
+	result = make(map[string]models.Contact)
 
 	for _, field := range contacts.Data {
 
@@ -25,10 +26,10 @@ func getContactsMap(apiKey string) (result map[string]Contact, err error) {
 	return result, nil
 }
 
-func getFoldersAsTasks(apiKey string) (result map[string]collectiveTimeLog, err error) {
+func getFoldersAsTasks(apiKey string) (result map[string]models.CollectiveTimeLog, err error) {
 	textContent := getDataForURL(host+"/folders", apiKey)
 
-	var folders collectiveTimelogs
+	var folders models.CollectiveTimelogs
 	err = json.Unmarshal(textContent, &folders)
 	if err != nil {
 		return result, err
@@ -48,7 +49,7 @@ func getFoldersAsTasks(apiKey string) (result map[string]collectiveTimeLog, err 
 		return result, err
 	}
 
-	result = make(map[string]collectiveTimeLog, 0)
+	result = make(map[string]models.CollectiveTimeLog, 0)
 
 	for _, k := range folders.Data {
 		if len(k.CustomFields) != 0 {
@@ -59,16 +60,16 @@ func getFoldersAsTasks(apiKey string) (result map[string]collectiveTimeLog, err 
 	return result, nil
 }
 
-func getCustomFieldsMap(apiKey string) (result map[string]CustomField, err error) {
+func getCustomFieldsMap(apiKey string) (result map[string]models.CustomField, err error) {
 	textContent := getDataForURL(host+"/customfields", apiKey)
 
-	var fields CustomFields
+	var fields models.CustomFields
 	err = json.Unmarshal(textContent, &fields)
 	if err != nil {
 		return result, err
 	}
 
-	result = make(map[string]CustomField)
+	result = make(map[string]models.CustomField)
 
 	for _, field := range fields.Data {
 		result[field.Id] = field
@@ -77,16 +78,16 @@ func getCustomFieldsMap(apiKey string) (result map[string]CustomField, err error
 	return result, nil
 }
 
-func getTimelogMap(apiKey string, contacts map[string]Contact) (result map[string][]Timelog, err error) {
+func getTimelogMap(apiKey string, contacts map[string]models.Contact) (result map[string][]models.Timelog, err error) {
 	textContent := getDataForURL(host+"/timelogs", apiKey)
 
-	var timelogs Timelogs
+	var timelogs models.Timelogs
 	err = json.Unmarshal(textContent, &timelogs)
 	if err != nil {
 		return result, err
 	}
 
-	result = make(map[string][]Timelog)
+	result = make(map[string][]models.Timelog)
 	for _, k := range timelogs.Data {
 
 		k.User = contacts[k.UserId].FirstName + " " + contacts[k.UserId].LastName

@@ -2,14 +2,16 @@ package main
 
 import (
 	"encoding/json"
+
+	"github.com/ChrisPritchard/wrike-timelog-extractor/models"
 )
 
 type taskTimeLog struct {
 	fields  map[string]string
-	timelog Timelog
+	timelog models.Timelog
 }
 
-func findCustomFields(task collectiveTimeLog, parentMap map[string]collectiveTimeLog) map[string]string {
+func findCustomFields(task models.CollectiveTimeLog, parentMap map[string]models.CollectiveTimeLog) map[string]string {
 	if len(task.CustomFields) == 0 {
 		if _, exists := parentMap[task.Id]; !exists {
 			return make(map[string]string)
@@ -29,17 +31,17 @@ func findCustomFields(task collectiveTimeLog, parentMap map[string]collectiveTim
 	return fields
 }
 
-func getTaskTimelogs(apiKey string, customFields map[string]CustomField, timelogs map[string][]Timelog, folders map[string]collectiveTimeLog) (result []taskTimeLog, err error) {
+func getTaskTimelogs(apiKey string, customFields map[string]models.CustomField, timelogs map[string][]models.Timelog, folders map[string]models.CollectiveTimeLog) (result []taskTimeLog, err error) {
 	textContent := getDataForURL(host+"/tasks?subTasks=true&fields=['customFields','subTaskIds','parentIds']", apiKey)
 
-	var cTimelogs collectiveTimelogs
+	var cTimelogs models.CollectiveTimelogs
 	err = json.Unmarshal(textContent, &cTimelogs)
 	if err != nil {
 		return result, err
 	}
 
 	// used to collect closest parent custom fields if necessary
-	parentMap := make(map[string]collectiveTimeLog)
+	parentMap := make(map[string]models.CollectiveTimeLog)
 	for _, k := range cTimelogs.Data {
 		for _, j := range k.SubTaskIds {
 			parentMap[j] = k
