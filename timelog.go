@@ -94,7 +94,9 @@ func getTaskTimelogs(apiKey string, customFields map[string]string, timelogs map
 			parentMap[j] = k
 		}
 		for _, j := range k.ParentIds {
-			// if exists in folders, add folder
+			if f, exists := folders[j]; exists {
+				parentMap[k.Id] = f
+			}
 		}
 	}
 
