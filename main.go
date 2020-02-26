@@ -10,6 +10,25 @@ import (
 
 const host = "https://www.wrike.com/api/v4"
 
+func main() {
+	log.SetFlags(0) // Disable log timestamp
+
+	apiKey := os.Getenv("WRIKEKEY")
+	if len(os.Args) == 2 {
+		apiKey = os.Args[1]
+	}
+
+	if apiKey == "" {
+		fmt.Println("please provide an API key (permananent access token) as an argument or as the env var WRIKEKEY")
+		os.Exit(1)
+	}
+
+	tasks, customFields := gatherData(apiKey)
+	csv := asCsv(tasks, customFields)
+
+	fmt.Print(csv)
+}
+
 func getDataForURL(url string, apiKey string) []byte {
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Authorization", "Bearer "+apiKey)
@@ -27,19 +46,7 @@ func getDataForURL(url string, apiKey string) []byte {
 	return body
 }
 
-func main() {
-	log.SetFlags(0) // Disable log timestamp
-
-	apiKey := os.Getenv("WRIKEKEY")
-	if len(os.Args) == 2 {
-		apiKey = os.Args[1]
-	}
-
-	if apiKey == "" {
-		fmt.Println("please provide an API key (permananent access token) as an argument or as the env var WRIKEKEY")
-		os.Exit(1)
-	}
-
+func gatherData(apiKey string) ([]taskTimeLog, []string) {
 	customFields, err := getCustomFieldsMap(apiKey)
 	if err != nil {
 		log.Fatal(err)
@@ -70,13 +77,18 @@ func main() {
 		customFieldKeys = append(customFieldKeys, key)
 	}
 
+	return tasks, customFieldKeys
+}
+
+func asCsv(tasks []taskTimeLog, customFields []string) string {
 	csv := ""
+
 	for _, task := range tasks {
-		for _, key := range customFieldKeys {
+		for _, key := range customFields {
 			csv += task.fields[key] + ","
 		}
 		csv += fmt.Sprintf("%s,%s,%f\n", task.timelog.User, task.timelog.TrackedDate, task.timelog.Hours)
 	}
 
-	fmt.Print(csv)
+	return csv
 }
