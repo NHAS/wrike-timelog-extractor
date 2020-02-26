@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/ChrisPritchard/wrike-timelog-extractor/models"
 )
@@ -78,8 +80,9 @@ func getCustomFieldsMap(apiKey string) (result map[string]models.CustomField, er
 	return result, nil
 }
 
-func getTimelogMap(apiKey string, contacts map[string]models.Contact) (result map[string][]models.Timelog, err error) {
-	textContent := getDataForURL(host+"/timelogs", apiKey)
+func getTimelogMap(apiKey string, contacts map[string]models.Contact, start time.Time, end time.Time) (result map[string][]models.Timelog, err error) {
+	dateConfig := fmt.Sprintf("{start:\"%s\",end:\"%s\"}", start.Format("2006-01-02"), end.Format("2006-01-02"))
+	textContent := getDataForURL(host+"/timelogs?trackedDate="+dateConfig, apiKey)
 
 	var timelogs models.Timelogs
 	err = json.Unmarshal(textContent, &timelogs)

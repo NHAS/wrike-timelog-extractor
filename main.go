@@ -82,7 +82,7 @@ func gatherData(apiKey string, start time.Time, end time.Time) (tasks []taskTime
 		log.Fatal(err)
 	}
 
-	timeLogs, err := getTimelogMap(apiKey, contacts)
+	timeLogs, err := getTimelogMap(apiKey, contacts, start, end)
 	if err != nil {
 		log.Fatal(err)
 	}
