@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "${fileDirname}",
             "envFile": "${workspaceFolder}/.env",
-            "args": ["--startDate", "01/01/2020"]
+            "args": ["--start-date","01/01/2020"]
         }
     ]
 }

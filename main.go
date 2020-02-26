@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const host = "https://www.wrike.com/api/v4"
@@ -14,31 +15,30 @@ const host = "https://www.wrike.com/api/v4"
 func main() {
 	log.SetFlags(0) // Disable log timestamp
 
-	apiKey := os.Getenv("WRIKEKEY")
-
-	apiKeyArg := flag.String("apiKey", "", "A Wrike API key, created through the UI (required); can also be set via the env var WRIKEKEY")
-	startDateArg := flag.String("start-date", "", "an explicit date to filter from (optional); if end date is not set will be until now.")
-	endDateArg := flag.String("end-date", "", "an explicit date to filter to (optional); requires start-date be set")
-	recentArg := flag.String("for-last", "month", "either day, week, month (default) or quarter, and is the same as setting a start date at now - duration; overriden by specific dates")
-
-	flag.Parse()
-
-	validateArgs(apiKey, apiKeyArg, startDateArg, endDateArg, recentArg)
-
-	if *apiKeyArg != "" {
-		apiKey = *apiKeyArg
-	}
-
-	tasks, customFields := gatherData(apiKey)
+	apiKey, start, end := getConfig()
+	tasks, customFields := gatherData(apiKey, start, end)
 	csv := asCsv(tasks, customFields)
 
 	fmt.Print(csv)
 }
 
-func validateArgs(apiKey string, apiKeyArg *string, startDateArg *string, endDateArg *string, recentArg *string) {
-	if apiKey == "" && *apiKeyArg == "" {
+func getConfig() (apiKey string, start time.Time, end time.Time) {
+
+	apiKeyEnv := os.Getenv("WRIKEKEY")
+	apiKeyArg := flag.String("api-key", "", "A Wrike API key, created through the UI (required); can also be set via the env var WRIKEKEY")
+	startDateArg := flag.String("start-date", "", "an explicit date to filter from in the format dd/MM/yyyy (optional); if end-date is not set will be until now.; if start-date is not set, assumes last month")
+	endDateArg := flag.String("end-date", "", "an explicit date to filter to in the format dd/MM/yyyy (optional); requires start-date be set")
+
+	flag.Parse()
+
+	if apiKeyEnv == "" && *apiKeyArg == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
+	}
+
+	apiKey = apiKeyEnv
+	if *apiKeyArg != "" {
+		apiKey = *apiKeyArg
 	}
 
 	if *startDateArg == "" && *endDateArg != "" {
@@ -46,30 +46,32 @@ func validateArgs(apiKey string, apiKeyArg *string, startDateArg *string, endDat
 		os.Exit(1)
 	}
 
-	if (*startDateArg != "" || *endDateArg != "") && *recentArg != "" {
+	now := time.Now()
+
+	if *startDateArg == "" {
+		return apiKey, now.AddDate(0, -1, 0), now
+	}
+
+	start, err := time.Parse("02/01/2006", *startDateArg)
+	if err != nil || start.After(now) {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-}
 
-func getDataForURL(url string, apiKey string) []byte {
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
+	if *endDateArg != "" {
+		end, err = time.Parse("02/01/2006", *endDateArg)
+		if err != nil || end.Before(start) {
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+	} else {
+		end = now
 	}
 
-	return body
+	return apiKey, start, end
 }
 
-func gatherData(apiKey string) ([]taskTimeLog, []string) {
+func gatherData(apiKey string, start time.Time, end time.Time) (tasks []taskTimeLog, customFieldKeys []string) {
 	customFields, err := getCustomFieldsMap(apiKey)
 	if err != nil {
 		log.Fatal(err)
@@ -90,17 +92,34 @@ func gatherData(apiKey string) ([]taskTimeLog, []string) {
 		log.Fatal(err)
 	}
 
-	tasks, err := getTaskTimelogs(apiKey, customFields, timeLogs, folders)
+	tasks, err = getTaskTimelogs(apiKey, customFields, timeLogs, folders)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	customFieldKeys := make([]string, 0)
+	customFieldKeys = make([]string, 0)
 	for key := range customFields {
 		customFieldKeys = append(customFieldKeys, key)
 	}
 
 	return tasks, customFieldKeys
+}
+
+func getDataForURL(url string, apiKey string) []byte {
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return body
 }
 
 func asCsv(tasks []taskTimeLog, customFields []string) string {
