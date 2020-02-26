@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,19 +15,41 @@ func main() {
 	log.SetFlags(0) // Disable log timestamp
 
 	apiKey := os.Getenv("WRIKEKEY")
-	if len(os.Args) == 2 {
-		apiKey = os.Args[1]
-	}
 
-	if apiKey == "" {
-		fmt.Println("please provide an API key (permananent access token) as an argument or as the env var WRIKEKEY")
-		os.Exit(1)
+	apiKeyArg := flag.String("apiKey", "", "A Wrike API key, created through the UI (required); can also be set via the env var WRIKEKEY")
+	startDateArg := flag.String("start-date", "", "an explicit date to filter from (optional); if end date is not set will be until now.")
+	endDateArg := flag.String("end-date", "", "an explicit date to filter to (optional); requires start-date be set")
+	recentArg := flag.String("for-last", "month", "either day, week, month (default) or quarter, and is the same as setting a start date at now - duration; overriden by specific dates")
+
+	flag.Parse()
+
+	validateArgs(apiKey, apiKeyArg, startDateArg, endDateArg, recentArg)
+
+	if *apiKeyArg != "" {
+		apiKey = *apiKeyArg
 	}
 
 	tasks, customFields := gatherData(apiKey)
 	csv := asCsv(tasks, customFields)
 
 	fmt.Print(csv)
+}
+
+func validateArgs(apiKey string, apiKeyArg *string, startDateArg *string, endDateArg *string, recentArg *string) {
+	if apiKey == "" && *apiKeyArg == "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if *startDateArg == "" && *endDateArg != "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if (*startDateArg != "" || *endDateArg != "") && *recentArg != "" {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 }
 
 func getDataForURL(url string, apiKey string) []byte {
